@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>LTX Notebook Monitor</title>
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    .row { padding: 8px; border-bottom: 1px solid #eee; }
+    .pass { color: green; } .fail { color: red; } .run { color: orange; }
+  </style>
+</head>
+<body>
+  <h1>LTX Notebook Monitor</h1>
+  <p>{{ summary.project_root }}</p>
+  <h2>Job Status</h2>
+  {% for row in rows %}
+  <div class="row">
+    Row {{ row.row }}:
+    <span class="{{ row.status }}">{{ row.status }}</span>
+    {% if row.output_file %} -> {{ row.output_file }} {% endif %}
+    {% if row.error %} <small>({{ row.error }})</small> {% endif %}
+  </div>
+  {% endfor %}
+  {% if not rows %}
+  <p>No jobs yet.</p>
+  {% endif %}
+</body>
+</html>

@@ -1,0 +1,27 @@
+# Ignore model files
+*.gguf
+*.safetensors
+
+# Ignore output videos
+outputs/
+
+# Ignore directories
+Wan2GP/
+sample_jobs/*.mp4
+sample_jobs/*.png
+sample_jobs/*.jpg
+sample_jobs/*.jpeg
+
+# Ignore temporary files
+*.tmp
+*.log
+__pycache__/
+*.pyc
+
+# Ignore Kaggle-specific files
+kaggle/
+.kaggle/
+
+# Ignore virtual environments
+venv/
+env/

@@ -1,0 +1,1 @@
+from models.custom_model.custom_adapter import CustomAdapter
