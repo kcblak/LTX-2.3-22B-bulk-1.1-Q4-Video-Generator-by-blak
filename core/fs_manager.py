@@ -11,13 +11,17 @@ from core.config import Config
 
 
 class FSManager:
-    def __init__(self, config: Config):
+    def __init__(self, config: Config, kaggle_input_root: Optional[Path] = None):
         self.config = config
+        self.kaggle_mode = bool(os.environ.get("KAGGLE_KERNEL_RUN_TYPE"))
 
-        # Kaggle or local root
-        if os.environ.get("KAGGLE_KERNEL_RUN_TYPE"):
+        if self.kaggle_mode:
+            self.input_source = Path(kaggle_input_root) if kaggle_input_root else Path("/kaggle/input")
+            self.working_root = Path("/kaggle/working")
             self.drive_root = Path("/kaggle/working/MyDrive")
         else:
+            self.input_source = Path("input")
+            self.working_root = Path.cwd()
             self.drive_root = Path("MyDrive")
 
         self.project_root = self.drive_root / "LTX_PROJECTS" / config.project_name
@@ -39,28 +43,21 @@ class FSManager:
         self._ensure_dirs()
 
     def _ensure_dirs(self) -> None:
-        dirs = [
-            self.project_root,
-            self.input_dir,
-            self.output_dir,
-            self.logs_dir,
-            self.checkpoints_dir,
-            self.cache_dir,
-            self.config_dir,
-            self.input_images_dir,
-            self.input_zips_dir,
-            self.input_extracted_dir,
-            self.output_videos_dir,
-            self.output_frames_dir,
-            self.output_thumbnails_dir,
-        ]
-        for d in dirs:
+        for d in [self.project_root, self.input_dir, self.output_dir,
+                  self.logs_dir, self.checkpoints_dir, self.cache_dir,
+                  self.config_dir, self.input_images_dir, self.input_zips_dir,
+                  self.input_extracted_dir, self.output_videos_dir,
+                  self.output_frames_dir, self.output_thumbnails_dir]:
             d.mkdir(parents=True, exist_ok=True)
 
     def project_config_path(self) -> Path:
         return self.config_dir / "config.yaml"
 
     def jobs_csv_path(self) -> Path:
+        if self.kaggle_mode and self.input_source.exists():
+            kaggle_csv = self.input_source / "jobs.csv"
+            if kaggle_csv.exists():
+                return kaggle_csv
         return self.input_dir / "jobs.csv"
 
     def validation_report_path(self) -> Path:
@@ -100,44 +97,27 @@ class FSManager:
                     if any(part in {"", ".", ".."} for part in member_path.parts):
                         continue
                     out_path = (target / member_path).resolve()
-                    if not str(out_path).startswith(str(target.resolve())):
-                        continue
-                    zf.extract(member, target)
-                    extracted.append(out_path)
+                    if out_path.is_file() and str(out_path).startswith(str(target.resolve())):
+                        zf.extract(member, target)
+                        extracted.append(out_path)
         return extracted
 
     def write_project_config(self) -> None:
         import yaml
         sample = {
-            "project_name": self.config.project_name,
-            "mode": "headless",
-            "device": "cuda",
-            "batch_size": 1,
-            "max_retries": 3,
-            "parallel_jobs": 1,
-            "output_format": "mp4",
-            "resolution_default": "720p",
-            "logging_level": "info",
-            "fps": 24,
-            "enhance_prompt": False,
-            "guide_scale": 3.0,
-            "sampling_steps": 8,
-            "guide_phases": 2,
-            "frame_interpolation": False,
-            "upscale": False,
-            "auto_upload_drive": False,
-            "drive_folder_id": "",
-            "drive_shared_drive_id": "",
-            "service_account_json_path": "",
+            "project_name": self.config.project_name, "mode": "headless", "device": "cuda",
+            "batch_size": 1, "max_retries": 3, "parallel_jobs": 1, "output_format": "mp4",
+            "resolution_default": "720p", "logging_level": "info", "fps": 24,
+            "enhance_prompt": False, "guide_scale": 3.0, "sampling_steps": 8, "guide_phases": 2,
+            "frame_interpolation": False, "upscale": False, "auto_upload_drive": False,
+            "drive_folder_id": "", "drive_shared_drive_id": "", "service_account_json_path": "",
         }
         with self.project_config_path().open("w", encoding="utf-8") as f:
             yaml.dump(sample, f, default_flow_style=False, sort_keys=False)
 
     def summary(self) -> dict[str, str]:
         return {
-            "project_root": str(self.project_root),
-            "jobs_csv": str(self.jobs_csv_path()),
-            "status_csv": str(self.status_csv_path()),
-            "logs_dir": str(self.logs_dir),
+            "project_root": str(self.project_root), "jobs_csv": str(self.jobs_csv_path()),
+            "status_csv": str(self.status_csv_path()), "logs_dir": str(self.logs_dir),
             "output_videos": str(self.output_videos_dir),
         }

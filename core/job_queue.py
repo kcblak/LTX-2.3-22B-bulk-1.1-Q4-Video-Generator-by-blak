@@ -1,14 +1,10 @@
 from __future__ import annotations
 
-import glob
-import os
-import shutil
-import zipfile
 from pathlib import Path
 from typing import Optional
 
-from batch.validator import read_jobs, validate_job_values, ValidationResult
-from batch.image_resolver import ImageResolver, validate_images_and_report
+from batch.validator import read_jobs
+from batch.image_resolver import validate_images_and_report
 from batch.state_manager import StateManager
 from batch.status import StatusWriter
 from core.fs_manager import FSManager
@@ -28,11 +24,20 @@ class JobQueue:
     def load(self) -> ValidationResult:
         csv_path = self.fs.jobs_csv_path()
         report_path = self.fs.validation_report_path()
+        images_dir = self.fs.input_images_dir
+        zip_path = self._find_zip()
+        if self.fs.kaggle_mode and self.fs.input_source.exists():
+            kaggle_images = self.fs.input_source / "images"
+            if kaggle_images.exists():
+                images_dir = kaggle_images
+            kaggle_zip = self.fs.input_source / "images.zip"
+            if kaggle_zip.exists() and zip_path is None:
+                zip_path = kaggle_zip
         result = validate_images_and_report(
             jobs=read_jobs(csv_path),
             manifest_path=csv_path,
-            images_dir=self.fs.input_images_dir,
-            images_zip=self._find_zip(),
+            images_dir=images_dir,
+            images_zip=zip_path,
             validation=validate_and_report_internal(csv_path, report_path),
         )
         self.jobs = result.jobs
@@ -42,7 +47,13 @@ class JobQueue:
 
     def _find_zip(self) -> Optional[Path]:
         zips = sorted(self.fs.input_zips_dir.glob("*.zip"))
-        return zips[0] if zips else None
+        if zips:
+            return zips[0]
+        if self.fs.kaggle_mode and self.fs.input_source.exists():
+            kaggle_zip = self.fs.input_source / "images.zip"
+            if kaggle_zip.exists():
+                return kaggle_zip
+        return None
 
     def pending_jobs(self) -> list[dict]:
         last_row = self.state.load().get("last_completed_row")

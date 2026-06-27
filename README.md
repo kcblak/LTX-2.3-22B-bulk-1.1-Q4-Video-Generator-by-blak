@@ -2,6 +2,13 @@
 
 A self-hosted, Kaggle-like notebook environment for bulk image-to-video and prompt-driven animation generation.
 
+## Kaggle Workflow
+
+1. Add dataset containing `jobs.csv` and optional `images.zip` to your Kaggle notebook
+2. Set secret `GDRIVE_SERVICE_ACCOUNT_JSON` (paste full JSON string)
+3. Run: `python main.py --init --project MyProject && python main.py --run --headless`
+4. System auto-loads from `/kaggle/input/`, writes to `/kaggle/working/MyDrive/LTX_PROJECTS/`
+
 ## Features
 
 - CSV-driven batch job processing
