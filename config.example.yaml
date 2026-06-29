@@ -7,6 +7,8 @@ parallel_jobs: 1
 output_format: mp4
 resolution_default: 720p
 logging_level: info
+dataset_name: ltx-batch
+service_account_json_path: ""  # On Kaggle: set via GDRIVE_SERVICE_ACCOUNT_JSON secret
 fps: 24
 enhance_prompt: false
 guide_scale: 3.0

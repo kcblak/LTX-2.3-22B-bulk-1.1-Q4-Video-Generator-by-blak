@@ -16,7 +16,13 @@ class FSManager:
         self.kaggle_mode = bool(os.environ.get("KAGGLE_KERNEL_RUN_TYPE"))
 
         if self.kaggle_mode:
-            self.input_source = Path(kaggle_input_root) if kaggle_input_root else Path("/kaggle/input")
+            base_input = Path(kaggle_input_root) if kaggle_input_root else Path("/kaggle/input")
+            dataset_name = self.config.dataset_name
+            if dataset_name:
+                self.input_source = base_input / dataset_name
+            else:
+                datasets = [d for d in base_input.iterdir() if d.is_dir()]
+                self.input_source = datasets[0] if datasets else base_input
             self.working_root = Path("/kaggle/working")
             self.drive_root = Path("/kaggle/working/MyDrive")
         else:
@@ -111,6 +117,7 @@ class FSManager:
             "enhance_prompt": False, "guide_scale": 3.0, "sampling_steps": 8, "guide_phases": 2,
             "frame_interpolation": False, "upscale": False, "auto_upload_drive": False,
             "drive_folder_id": "", "drive_shared_drive_id": "", "service_account_json_path": "",
+            "dataset_name": self.config.dataset_name or "",
         }
         with self.project_config_path().open("w", encoding="utf-8") as f:
             yaml.dump(sample, f, default_flow_style=False, sort_keys=False)

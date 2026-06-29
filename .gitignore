@@ -1,4 +1,6 @@
-# Ignore model files
+# Ignore sensitive credentials
+service-account.json
+gdrive-key.json
 *.gguf
 *.safetensors
 

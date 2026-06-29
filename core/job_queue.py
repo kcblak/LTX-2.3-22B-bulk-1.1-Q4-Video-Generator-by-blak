@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Any
 
 from batch.validator import read_jobs
 from batch.image_resolver import validate_images_and_report
@@ -12,6 +12,13 @@ from core.logger import Logger
 from core.config import Config
 
 
+class ValidationResultAlias:
+    def __init__(self):
+        self.jobs = []
+        self.errors = []
+        self.passed = True
+
+
 class JobQueue:
     def __init__(self, fs: FSManager, logger: Logger):
         self.fs = fs
@@ -19,26 +26,26 @@ class JobQueue:
         self.state = StateManager(fs.checkpoints_dir)
         self.status = StatusWriter(fs.status_csv_path)
         self.jobs: list[dict] = []
-        self._resolver: Optional[ImageResolver] = None
 
-    def load(self) -> ValidationResult:
+    def load(self) -> Any:
         csv_path = self.fs.jobs_csv_path()
         report_path = self.fs.validation_report_path()
         images_dir = self.fs.input_images_dir
         zip_path = self._find_zip()
-        if self.fs.kaggle_mode and self.fs.input_source.exists():
+        if self.fs.kaggle_mode:
             kaggle_images = self.fs.input_source / "images"
             if kaggle_images.exists():
                 images_dir = kaggle_images
             kaggle_zip = self.fs.input_source / "images.zip"
             if kaggle_zip.exists() and zip_path is None:
                 zip_path = kaggle_zip
+        validation = _validate_and_report_internal(csv_path, report_path)
         result = validate_images_and_report(
             jobs=read_jobs(csv_path),
             manifest_path=csv_path,
             images_dir=images_dir,
             images_zip=zip_path,
-            validation=validate_and_report_internal(csv_path, report_path),
+            validation=validation,
         )
         self.jobs = result.jobs
         self.status.initialize(self.jobs)
@@ -49,7 +56,7 @@ class JobQueue:
         zips = sorted(self.fs.input_zips_dir.glob("*.zip"))
         if zips:
             return zips[0]
-        if self.fs.kaggle_mode and self.fs.input_source.exists():
+        if self.fs.kaggle_mode:
             kaggle_zip = self.fs.input_source / "images.zip"
             if kaggle_zip.exists():
                 return kaggle_zip
@@ -94,9 +101,9 @@ class JobQueue:
         )
 
 
-def validate_and_report_internal(
+def _validate_and_report_internal(
     manifest_path: Path, report_path: Path
-) -> ValidationResult:
+) -> Any:
     from batch.validator import validate_and_report
     return validate_and_report(manifest_path, report_path)
 

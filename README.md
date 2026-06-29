@@ -21,10 +21,17 @@ A self-hosted, Kaggle-like notebook environment for bulk image-to-video and prom
 
 ## Quick Start
 
+### Local/Headless
 1. Copy `config.example.yaml` to `config.yaml` and edit as needed.
 2. Run `python main.py --init --project MyProject`
-3. Place your `jobs.csv` in `MyDrive/LTX_PROJECTS/MyProject/input/jobs.csv`
+3. Place `jobs.csv` in `MyDrive/LTX_PROJECTS/MyProject/input/jobs.csv`
 4. Run `python main.py --run --headless`
+
+### Kaggle Notebook
+1. Add dataset `ltx-batch` containing `jobs.csv` and `images.zip`
+2. Set Kaggle secret `GDRIVE_SERVICE_ACCOUNT_JSON` with your service account JSON
+3. Run the two commands above
+4. System reads from `/kaggle/input/ltx-batch/`, outputs to `/kaggle/working/MyDrive/`
 
 ## Commands
 

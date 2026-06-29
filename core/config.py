@@ -51,6 +51,7 @@ class Config:
         self.drive_folder_id: Optional[str] = data.get("drive_folder_id") or None
         self.drive_shared_drive_id: Optional[str] = data.get("drive_shared_drive_id") or None
         self.service_account_json_path: Optional[str] = data.get("service_account_json_path") or None
+        self.dataset_name: Optional[str] = data.get("dataset_name") or None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -75,6 +76,7 @@ class Config:
             "drive_folder_id": self.drive_folder_id,
             "drive_shared_drive_id": self.drive_shared_drive_id,
             "service_account_json_path": self.service_account_json_path,
+            "dataset_name": self.dataset_name,
         }
 
 
